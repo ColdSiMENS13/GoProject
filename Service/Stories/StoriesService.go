@@ -15,13 +15,13 @@ type Stories struct {
 }
 
 type StoryTree struct {
-	Id          int         `json:"id"`
-	StoryId     int         `json:"story_id"`
-	ParentId    *int        `json:"parent_id,omitempty"`
-	Title       string      `json:"title"`
-	Description string      `json:"description"`
-	Image       *string     `json:"image,omitempty"`
-	Children    []StoryTree `json:"children,omitempty"`
+	Id          int          `json:"id"`
+	StoryId     int          `json:"story_id"`
+	ParentId    *int         `json:"parent_id,omitempty"`
+	Title       string       `json:"title"`
+	Description string       `json:"description"`
+	Image       *string      `json:"image,omitempty"`
+	Children    []*StoryTree `json:"children,omitempty"`
 }
 
 func GetAllStories() []Stories {
@@ -51,7 +51,7 @@ func GetAllStories() []Stories {
 	return storyRows
 }
 
-func GetStoryTreeByStoryId(id int) []StoryTree {
+func GetStoryTreeByStoryId(id int) *StoryTree {
 	conString := config.GetConnectionString()
 	db, err := sql.Open("postgres", conString)
 	if err != nil {
@@ -74,7 +74,7 @@ func GetStoryTreeByStoryId(id int) []StoryTree {
 		StoryTreeRows = append(StoryTreeRows, r)
 	}
 
-	var resultTree []StoryTree
+	var resultTree *StoryTree
 	temp := make(map[int]*StoryTree)
 	for _, item := range StoryTreeRows {
 		story := &StoryTree{
@@ -84,22 +84,22 @@ func GetStoryTreeByStoryId(id int) []StoryTree {
 			Title:       item.Title,
 			Description: item.Description,
 			Image:       item.Image,
-			Children:    []StoryTree{},
+			Children:    []*StoryTree{},
 		}
 
 		temp[item.Id] = story
 
 		if item.ParentId == nil {
-			resultTree = append(resultTree, *story)
+			resultTree = story
 			continue
 		}
 
-		temp[*item.ParentId].addChild(*story)
+		temp[*item.ParentId].addChild(story)
 	}
 
 	return resultTree
 }
 
-func (c *StoryTree) addChild(child StoryTree) {
+func (c *StoryTree) addChild(child *StoryTree) {
 	c.Children = append(c.Children, child)
 }
