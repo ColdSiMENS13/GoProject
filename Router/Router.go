@@ -1,0 +1,4 @@
+package Router
+
+func RouteChecker() {
+}
