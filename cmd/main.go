@@ -2,10 +2,11 @@ package main
 
 import (
 	StoriesController "GoApp/Controller/Stories"
+	"log"
+
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
-	"log"
 )
 
 func init() {
@@ -19,7 +20,8 @@ func main() {
 	router := gin.Default()
 
 	router.GET("/stories", StoriesController.GetStories)
-	router.GET("/storyTree", StoriesController.GetStoryTree)
+	router.GET("/stroies/:id", StoriesController.GetStoryTree)
+	router.GET("/stories/:id/like", StoriesController.AddLike)
 
 	router.Run("localhost:8087")
 }

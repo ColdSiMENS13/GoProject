@@ -1,4 +1,0 @@
-package Router
-
-func RouteChecker() {
-}

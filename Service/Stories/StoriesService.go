@@ -3,8 +3,9 @@ package StoriesService
 import (
 	config "GoApp/databaseConf/database"
 	"database/sql"
-	_ "github.com/lib/pq"
 	"log"
+
+	_ "github.com/lib/pq"
 )
 
 type Stories struct {
@@ -12,6 +13,8 @@ type Stories struct {
 	Title       string  `json:"title"`
 	Description string  `json:"description"`
 	Image       *string `json:"image,omitempty"`
+	Likes       int     `json:"likes"`
+	Views       int     `json:"views"`
 }
 
 type StoryTree struct {
@@ -24,14 +27,12 @@ type StoryTree struct {
 	Children    []*StoryTree `json:"children,omitempty"`
 }
 
-func GetAllStories() []Stories {
-	conString := config.GetConnectionString()
+type LikeResponse struct {
+	Message string `json:"message"`
+}
 
-	db, err := sql.Open("postgres", conString)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
+func GetAllStories() []Stories {
+	db := openConnection()
 
 	result, err := db.Query("SELECT * FROM stories")
 	if err != nil {
@@ -41,7 +42,7 @@ func GetAllStories() []Stories {
 	var storyRows []Stories
 	for result.Next() {
 		var r Stories
-		if err := result.Scan(&r.Id, &r.Title, &r.Description, &r.Image); err != nil {
+		if err := result.Scan(&r.Id, &r.Title, &r.Description, &r.Image, &r.Likes, &r.Views); err != nil {
 			log.Fatal(err)
 		}
 
@@ -51,13 +52,26 @@ func GetAllStories() []Stories {
 	return storyRows
 }
 
-func GetStoryTreeByStoryId(id int) *StoryTree {
-	conString := config.GetConnectionString()
-	db, err := sql.Open("postgres", conString)
+func AddLikeToStory(id int) LikeResponse {
+	db := openConnection()
+
+	_, err := db.Query("UPDATE stories SET likes = likes + 1 WHERE id = $1", id)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer db.Close()
+
+	return LikeResponse{
+		Message: "Thanks for like",
+	}
+}
+
+func GetStoryTreeByStoryId(id int) *StoryTree {
+	db := openConnection()
+
+	_, err := db.Query("UPDATE stories SET views = views + 1 WHERE id = $1", id)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	result, err := db.Query("SELECT * FROM stories_data WHERE story_id = $1", id)
 	if err != nil {
@@ -102,4 +116,15 @@ func GetStoryTreeByStoryId(id int) *StoryTree {
 
 func (c *StoryTree) addChild(child *StoryTree) {
 	c.Children = append(c.Children, child)
+}
+
+func openConnection() *sql.DB {
+	conString := config.GetConnectionString()
+	db, err := sql.Open("postgres", conString)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	return db
 }
