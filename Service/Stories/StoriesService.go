@@ -1,10 +1,7 @@
 package StoriesService
 
 import (
-	config "GoApp/databaseConf/database"
-	"database/sql"
-	"log"
-
+	StoriesRepository "GoApp/Service/Stories/Repository"
 	_ "github.com/lib/pq"
 )
 
@@ -18,9 +15,6 @@ type Stories struct {
 }
 
 type StoryTree struct {
-	Id          int          `json:"id"`
-	StoryId     int          `json:"story_id"`
-	ParentId    *int         `json:"parent_id,omitempty"`
 	Title       string       `json:"title"`
 	Description string       `json:"description"`
 	Image       *string      `json:"image,omitempty"`
@@ -32,69 +26,38 @@ type LikeResponse struct {
 }
 
 func GetAllStories() []Stories {
-	db := openConnection()
+	result := StoriesRepository.GetAllStories()
 
-	result, err := db.Query("SELECT * FROM stories")
-	if err != nil {
-		log.Fatal(err)
+	var stories []Stories
+	for _, item := range result {
+		stories = append(stories, Stories{
+			Id:          item.Id,
+			Title:       item.Title,
+			Description: item.Description,
+			Image:       item.Image,
+			Likes:       item.Likes,
+			Views:       item.Views,
+		})
 	}
 
-	var storyRows []Stories
-	for result.Next() {
-		var r Stories
-		if err := result.Scan(&r.Id, &r.Title, &r.Description, &r.Image, &r.Likes, &r.Views); err != nil {
-			log.Fatal(err)
-		}
-
-		storyRows = append(storyRows, r)
-	}
-
-	return storyRows
+	return stories
 }
 
 func AddLikeToStory(id int) LikeResponse {
-	db := openConnection()
-
-	_, err := db.Query("UPDATE stories SET likes = likes + 1 WHERE id = $1", id)
-	if err != nil {
-		log.Fatal(err)
-	}
+	message := StoriesRepository.AddLikeToStory(id)
 
 	return LikeResponse{
-		Message: "Thanks for like",
+		Message: message,
 	}
 }
 
 func GetStoryTreeByStoryId(id int) *StoryTree {
-	db := openConnection()
-
-	_, err := db.Query("UPDATE stories SET views = views + 1 WHERE id = $1", id)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	result, err := db.Query("SELECT * FROM stories_data WHERE story_id = $1", id)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var StoryTreeRows []StoryTree
-	for result.Next() {
-		var r StoryTree
-		if err := result.Scan(&r.Id, &r.StoryId, &r.ParentId, &r.Title, &r.Description, &r.Image); err != nil {
-			log.Fatal(err)
-		}
-
-		StoryTreeRows = append(StoryTreeRows, r)
-	}
+	result := StoriesRepository.GetStoryTreeByStoryId(id)
 
 	var resultTree *StoryTree
 	temp := make(map[int]*StoryTree)
-	for _, item := range StoryTreeRows {
+	for _, item := range result {
 		story := &StoryTree{
-			Id:          item.Id,
-			StoryId:     item.StoryId,
-			ParentId:    item.ParentId,
 			Title:       item.Title,
 			Description: item.Description,
 			Image:       item.Image,
@@ -116,15 +79,4 @@ func GetStoryTreeByStoryId(id int) *StoryTree {
 
 func (c *StoryTree) addChild(child *StoryTree) {
 	c.Children = append(c.Children, child)
-}
-
-func openConnection() *sql.DB {
-	conString := config.GetConnectionString()
-	db, err := sql.Open("postgres", conString)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	return db
 }

@@ -20,7 +20,7 @@ func main() {
 	router := gin.Default()
 
 	router.GET("/stories", StoriesController.GetStories)
-	router.GET("/stroies/:id", StoriesController.GetStoryTree)
+	router.GET("/stories/:id", StoriesController.GetStoryTree)
 	router.GET("/stories/:id/like", StoriesController.AddLike)
 
 	router.Run("localhost:8087")

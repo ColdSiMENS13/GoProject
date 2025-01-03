@@ -2,6 +2,9 @@
 <project version="4">
   <component name="SqlDialectMappings">
     <file url="file://$PROJECT_DIR$/Controller/Stories/StoriesController.go" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/Service/Stories/Repository/AddLike.go" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/Service/Stories/Repository/GetAllStories.go" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/Service/Stories/Repository/GetStoryTree.go" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/Service/Stories/StoriesService.go" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/cmd/main.go" dialect="GenericSQL" />
   </component>
